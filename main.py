@@ -12,7 +12,6 @@ st.set_page_config(
 )
 
 # 2. 한국 표준시(KST) 기준 어제 날짜 계산
-# 서버 시계(UTC 등)와 상관없이 한국 시간을 기준으로 계산합니다.
 kst = pytz.timezone('Asia/Seoul')
 now_kst = datetime.datetime.now(kst)
 yesterday_kst = now_kst - datetime.timedelta(days=1)
@@ -24,7 +23,6 @@ st.title("🎬 어제의 박스오피스")
 st.caption(f"기준일: {formatted_date_str} (한국 시간 기준)")
 
 # 3. Streamlit Secrets에서 API 키 불러오기
-# Streamlit Cloud의 Secrets 설정에서 KOBIS_KEY를 지정해야 합니다.
 if "KOBIS_KEY" not in st.secrets:
     st.error("🔑 API 인증키가 설정되지 않았습니다.")
     st.info("""
@@ -127,7 +125,7 @@ st.bar_chart(chart_data)
 
 st.divider()
 
-# 10. 전체 순위 표 출력
+# 10. 전체 순위 표 출력 (괄호 닫기 수정 부분)
 st.subheader("📋 전체 박스오피스 순위")
 
 # 필요한 컬럼만 추출하고 이름 변경
@@ -139,7 +137,7 @@ display_df.columns = [
     "순위", "영화명", "개봉일", "관객수(명)", "누적관객(명)", "스크린수(개)"
 ]
 
-# 데이터 프레임 출력 (숫자 포맷팅 적용)
+# 데이터 프레임 출력 (구문 오류 수정 완료)
 st.dataframe(
     display_df,
     use_container_width=True,
@@ -148,4 +146,6 @@ st.dataframe(
         "순위": st.column_config.NumberColumn(format="%d위"),
         "관객수(명)": st.column_config.NumberColumn(format="%d 명"),
         "누적관객(명)": st.column_config.NumberColumn(format="%d 명"),
-        "스크린수(개)":
+        "스크린수(개)": st.column_config.NumberColumn(format="%d 개")
+    }
+)
