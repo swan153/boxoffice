@@ -14,23 +14,19 @@ st.set_page_config(
 # 영화관 무드의 다크 테마 Custom CSS 적용
 st.markdown("""
     <style>
-    /* 전체 배경을 어두운 영화관 톤으로 변경 */
     .stApp {
         background-color: #0e1117;
         color: #e0e0e0;
     }
-    /* 카드 및 컨테이너 배경 */
     div[data-testid="stMetric"], .stCard {
         background-color: #1a1c23;
         border: 1px solid #333d4d;
         border-radius: 10px;
         padding: 15px;
     }
-    /* 타이틀 색상 (골드 톤) */
     h1, h2, h3 {
         color: #f39c12 !important;
     }
-    /* 서브텍스트 색상 */
     .stCaption {
         color: #a0a0a0 !important;
     }
@@ -65,11 +61,7 @@ st.caption(f"기준일: {formatted_date_str} (한국 시간 기준)")
 # 3. Streamlit Secrets에서 API 키 불러오기
 if "KOBIS_KEY" not in st.secrets:
     st.error("🔑 API 인증키가 설정되지 않았습니다.")
-    st.info("""
-    **확인해 주세요:**
-    1. Streamlit Cloud 앱 설정의 **Secrets** 항목을 확인해 주세요.
-    2. `KOBIS_KEY = "발급받은_키"` 형태로 입력되어 있는지 확인해 주세요.
-    """)
+    st.info("Streamlit Cloud 설정의 Secrets에서 KOBIS_KEY를 지정해 주세요.")
     st.stop()
 
 api_key = st.secrets["KOBIS_KEY"]
@@ -95,9 +87,25 @@ if "faultInfo" in data:
     st.error(f"⚠️ KOBIS API 오류 발생: {fault_msg}")
     st.stop()
 
-# 6. 영화 목록 추출
+# 6. 영화 목록 추출 및 비어있을 때 예외 처리
 boxoffice_result = data.get("boxOfficeResult", {})
 movie_list = boxoffice_result.get("dailyBoxOfficeList", [])
 
 if not movie_list:
-    st.warning("📂 그날은
+    st.warning("📂 그날은 아직 집계 전입니다.")
+    st.stop()
+
+# 7. 데이터 전처리
+df = pd.DataFrame(movie_list)
+num_cols = ["rank", "rankInten", "audiCnt", "audiAcc", "scrnCnt", "showCnt"]
+for col in num_cols:
+    if col in df.columns:
+        df[col] = pd.to_numeric(df[col], errors="coerce").fillna(0)
+
+# 전처리 함수 정의
+def format_movie_name(row):
+    return f"{row['movieNm']} 🏆" if row["audiAcc"] >= 1_000_000 else row["movieNm"]
+
+def format_rank_inten(inten):
+    inten = int(inten)
+    if inten > 0:
