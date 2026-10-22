@@ -3,32 +3,34 @@ import requests
 import pandas as pd
 import pytz
 import streamlit as st
+import altair as alt
 
-# 1. 페이지 설정
+# 1. 페이지 기본 설정
 st.set_page_config(
     page_title="🎬 시네마 박스오피스",
     page_icon="🍿",
     layout="wide"
 )
 
-# 2. 다크 테마 CSS
+# 2. 고대비 다크 테마 적용 (회색 글씨 -> 선명한 하얀색/밝은 톤으로 수정)
 st.markdown("""
     <style>
     .stApp {
         background-color: #0e1117;
-        color: #e0e0e0;
+        color: #ffffff !important;
     }
     div[data-testid="stMetric"], .stCard {
         background-color: #1a1c23;
-        border: 1px solid #333d4d;
+        border: 1px solid #4a5568;
         border-radius: 10px;
         padding: 15px;
     }
     h1, h2, h3 {
-        color: #f39c12 !important;
+        color: #f1c40f !important;
     }
-    .stCaption {
-        color: #a0a0a0 !important;
+    /* 서브텍스트 및 캡션 글자색을 명확한 밝은색으로 고정 */
+    .stCaption, p, span, label {
+        color: #ffffff !important;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -183,27 +185,6 @@ st.info(
 
 st.divider()
 
-# 9. 막대 그래프
+# 9. 막대 그래프 (가로 텍스트 라벨 적용)
 st.subheader("📊 관객수 TOP 5")
-st.write("📐 **그래프 크기(높이) 조절:**")
-
-b_col1, b_col2, b_col3, _ = st.columns([1, 1, 1, 5])
-with b_col1:
-    if st.button("작게 (200px)"):
-        st.session_state.chart_height = 200
-with b_col2:
-    if st.button("보통 (350px)"):
-        st.session_state.chart_height = 350
-with b_col3:
-    if st.button("크게 (500px)"):
-        st.session_state.chart_height = 500
-
-top_5_df = df.head(5).copy()
-chart_data = top_5_df.set_index("movieNm")[["audiCnt"]]
-chart_data.columns = ["일일 관객수"]
-
-st.bar_chart(chart_data, height=st.session_state.chart_height)
-
-st.divider()
-
-# 10. 순위 표
+st.write
