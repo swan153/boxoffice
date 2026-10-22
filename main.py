@@ -187,4 +187,69 @@ st.divider()
 
 # 9. 막대 그래프 (가로 텍스트 라벨 적용)
 st.subheader("📊 관객수 TOP 5")
-st.write
+st.write("📐 **그래프 크기(높이) 조절:**")
+
+b_col1, b_col2, b_col3, _ = st.columns([1, 1, 1, 5])
+with b_col1:
+    if st.button("작게 (200px)"):
+        st.session_state.chart_height = 200
+with b_col2:
+    if st.button("보통 (350px)"):
+        st.session_state.chart_height = 350
+with b_col3:
+    if st.button("크게 (500px)"):
+        st.session_state.chart_height = 500
+
+top_5_df = df.head(5).copy()
+
+# Altair 차트를 사용하여 x축 제목 라벨이 가로(0도)로 똑바로 출력되도록 고정
+chart = alt.Chart(top_5_df).mark_bar(color="#f1c40f").encode(
+    x=alt.X('movieNm:N', title='영화명', sort=None, axis=alt.Axis(labelAngle=0)),
+    y=alt.Y('audiCnt:Q', title='일일 관객수(명)'),
+    tooltip=['movieNm', 'audiCnt']
+).properties(
+    height=st.session_state.chart_height
+)
+
+st.altair_chart(chart, use_container_width=True)
+
+st.divider()
+
+# 10. 전체 박스오피스 순위표 출력
+st.subheader("📋 전체 박스오피스 순위")
+
+cols_to_select = [
+    "rank",
+    "rank_change",
+    "formatted_movie_name",
+    "openDt",
+    "audiCnt",
+    "audiAcc",
+    "scrnCnt"
+]
+
+display_df = df[cols_to_select].copy()
+
+new_column_names = [
+    "순위",
+    "순위변동",
+    "영화명",
+    "개봉일",
+    "관객수(명)",
+    "누적관객(명)",
+    "스크린수(개)"
+]
+
+display_df.columns = new_column_names
+
+st.dataframe(
+    display_df,
+    use_container_width=True,
+    hide_index=True,
+    column_config={
+        "순위": st.column_config.NumberColumn(format="%d위"),
+        "관객수(명)": st.column_config.NumberColumn(format="%d 명"),
+        "누적관객(명)": st.column_config.NumberColumn(format="%d 명"),
+        "스크린수(개)": st.column_config.NumberColumn(format="%d 개")
+    }
+)
