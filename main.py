@@ -4,14 +4,14 @@ import pandas as pd
 import pytz
 import streamlit as st
 
-# 1. 페이지 기본 설정 (영화관 테마)
+# 1. 페이지 설정
 st.set_page_config(
     page_title="🎬 시네마 박스오피스",
     page_icon="🍿",
     layout="wide"
 )
 
-# Custom CSS 적용
+# 2. 다크 테마 CSS
 st.markdown("""
     <style>
     .stApp {
@@ -33,7 +33,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# 2. 날짜 설정 (KST 기준)
+# 3. 날짜 설정 (KST)
 kst = pytz.timezone('Asia/Seoul')
 now_kst = datetime.datetime.now(kst)
 yesterday_kst = (now_kst - datetime.timedelta(days=1)).date()
@@ -55,22 +55,22 @@ formatted_date_str = selected_date.strftime('%Y년 %m월 %d일')
 
 st.caption(f"기준일: {formatted_date_str} (한국 시간)")
 
-# 3. Secrets 키 확인
+# 4. API 키 확인
 if "KOBIS_KEY" not in st.secrets:
     st.error("🔑 API 인증키가 설정되지 않았습니다.")
     st.stop()
 
 api_key = st.secrets["KOBIS_KEY"]
 
-# 4. API 요청
-boxoffice_url = "https://www.kobis.or.kr/kobisopenapi/webservice/rest/boxoffice/searchDailyBoxOfficeList.json"
+# 5. API 요청
+url = "https://www.kobis.or.kr/kobisopenapi/webservice/rest/boxoffice/searchDailyBoxOfficeList.json"
 params = {
     "key": api_key,
     "targetDt": target_date_str
 }
 
 try:
-    response = requests.get(boxoffice_url, params=params, timeout=10)
+    response = requests.get(url, params=params, timeout=10)
     response.raise_for_status()
     data = response.json()
 except requests.exceptions.RequestException:
@@ -82,7 +82,7 @@ if "faultInfo" in data:
     st.error(f"⚠️ KOBIS API 오류: {fault_msg}")
     st.stop()
 
-# 5. 영화 목록 확인
+# 6. 목록 추출 및 검증
 boxoffice_result = data.get("boxOfficeResult", {})
 movie_list = boxoffice_result.get("dailyBoxOfficeList", [])
 
@@ -90,7 +90,7 @@ if not movie_list:
     st.warning("📂 그날은 아직 집계 전입니다.")
     st.stop()
 
-# 6. 데이터 전처리
+# 7. 데이터 전처리
 df = pd.DataFrame(movie_list)
 num_cols = ["rank", "rankInten", "audiCnt", "audiAcc", "scrnCnt", "showCnt"]
 for col in num_cols:
@@ -115,12 +115,15 @@ df["rank_change"] = df["rankInten"].apply(format_rank_inten)
 
 st.divider()
 
-# 7. 1위 영화 상세 정보 API
+# 8. 1위 영화 상세 정보
 top_1 = df.iloc[0]
 top_1_cd = top_1["movieCd"]
 
 info_url = "https://www.kobis.or.kr/kobisopenapi/webservice/rest/movie/searchMovieInfo.json"
-info_params = {"key": api_key, "movieCd": top_1_cd}
+info_params = {
+    "key": api_key,
+    "movieCd": top_1_cd
+}
 
 director_name = "정보 없음"
 genres = "정보 없음"
@@ -155,7 +158,7 @@ except Exception:
 
 st.subheader(f"🥇 오늘의 1위: {top_1['formatted_movie_name']}")
 
-# 1위 지표 카드
+# 1위 카드 지표
 col1, col2, col3 = st.columns(3)
 with col1:
     v1 = f"{int(top_1['audiCnt']):,} 명"
@@ -167,9 +170,9 @@ with col3:
     v3 = f"{int(top_1['scrnCnt']):,} 개"
     st.metric(label="상영 스크린수", value=v3)
 
-# 1위 영화 상세 정보 Box
+# 1위 영화 상세설명
 st.markdown("### 🎬 1위 영화 상세 정보")
-info_text = (
+st.info(
     f"- **감독:** {director_name}\n"
     f"- **장르:** {genres}\n"
     f"- **상영시간:** {show_tm}\n"
@@ -177,11 +180,10 @@ info_text = (
     f"- **주요 출연진:** {actors}\n"
     f"- **개봉일:** {top_1['openDt']}"
 )
-st.info(info_text)
 
 st.divider()
 
-# 8. TOP 5 막대그래프
+# 9. 막대 그래프
 st.subheader("📊 관객수 TOP 5")
 st.write("📐 **그래프 크기(높이) 조절:**")
 
@@ -204,14 +206,4 @@ st.bar_chart(chart_data, height=st.session_state.chart_height)
 
 st.divider()
 
-# 9. 전체 순위 표
-st.subheader("📋 전체 박스오피스 순위")
-
-display_df = df[[
-    "rank", "rank_change", "formatted_movie_name",
-    "openDt", "audiCnt", "audiAcc", "scrnCnt"
-]].copy()
-
-display_df.columns = [
-    "순위", "순위변동", "영화명",
-    "개봉일", "관객수(명)", "누적관객
+# 10. 순위 표
