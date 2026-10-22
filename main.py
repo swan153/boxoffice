@@ -102,10 +102,18 @@ for col in num_cols:
     if col in df.columns:
         df[col] = pd.to_numeric(df[col], errors="coerce").fillna(0)
 
-# 전처리 함수 정의
+# 전처리 함수 정의 (들여쓰기 통일)
 def format_movie_name(row):
-    return f"{row['movieNm']} 🏆" if row["audiAcc"] >= 1_000_000 else row["movieNm"]
+    if row["audiAcc"] >= 1_000_000:
+        return f"{row['movieNm']} 🏆"
+    return row["movieNm"]
 
 def format_rank_inten(inten):
     inten = int(inten)
     if inten > 0:
+        return f"🔺 {inten}"
+    elif inten < 0:
+        return f"🔹 {abs(inten)}"
+    return "-"
+
+df["formatted_movie_name"] = df.apply(format_
